@@ -46,7 +46,7 @@
   .tag{padding:6px 10px;border-radius:999px;background:rgba(111,102,255,0.08);color:var(--accent);font-weight:700;font-size:12px}
   .modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
   .modal.open{display:flex}
-  .modal-content{background:linear-gradient(180deg,#071225,#041424);padding:20px;border-radius:12px;max-width:900px;width:100%;max-height:90vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
+  .modal-content{background:linear-gradient(180deg,#071225,#041424);padding:20px;border-radius:12px;max-width:920px;width:100%;max-height:90vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
   .resume{background:#fff;color:#071225;padding:28px;border-radius:8px;font-family:Inter,Arial;margin:0 auto;max-width:850px}
   .resume h1{margin:0;font-size:22px}
   .resume h2{margin:8px 0 6px 0;font-size:16px;color:#111}
@@ -146,19 +146,20 @@
 
 <script>
 /*
-  Single-file behavior:
-  - Fetches profile and repos from GitHub for `sagheerakram`
-  - Renders projects, about text, repos
-  - Contact button opens modal + mailto + clipboard fallback
-  - Resume preview + Print (save as PDF) + Download HTML
-  - Filters out repos named 'sagheerakram' and 'sagheerakram.github.io'
+  Updated single-file app:
+  - Resume preview now renders (no HTML code)
+  - Resume download opens new window and triggers print() to let user Save as PDF
+  - Phone: +92 370 4220020
+  - Contact: sagheersamiullah02@gmail.com
+  - Filters: excludes repos named 'sagheerakram' and 'sagheerakram.github.io'
 */
 
 /* ---------- CONFIG ---------- */
-const GITHUB_USER = 'sagheerakram'; // using lowercase to match common repo name patterns
+const GITHUB_USER = 'sagheerakram';
 const GITHUB_API = `https://api.github.com/users/${GITHUB_USER}`;
 const REPOS_API = `https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`;
-const CONTACT_EMAIL = 'sagheersamiullah02@gmail.com'; // updated email everywhere
+const CONTACT_EMAIL = 'sagheersamiullah02@gmail.com';
+const CONTACT_PHONE = '+92 370 4220020';
 
 /* ---------- DOM refs ---------- */
 const projectsPane = document.getElementById('pane-projects');
@@ -170,7 +171,7 @@ const githubHandleEl = document.getElementById('github-handle');
 const modal = document.getElementById('modal');
 const modalBody = document.getElementById('modal-body');
 
-/* ---------- small helpers ---------- */
+/* ---------- helpers ---------- */
 function el(tag, attrs={}, ...children){
   const e = document.createElement(tag);
   for(const k in attrs){
@@ -199,7 +200,7 @@ function toast(msg, ms=2400){
   setTimeout(()=> t.remove(), ms);
 }
 
-/* ---------- Tab switching (simple) ---------- */
+/* ---------- Tab switching ---------- */
 document.querySelectorAll('.tab').forEach(btn=>{
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
@@ -207,25 +208,21 @@ document.querySelectorAll('.tab').forEach(btn=>{
     const target = btn.dataset.target;
     document.querySelectorAll('#panes > section, #panes > div.card').forEach(p=>p.style.display='none');
     const pane = document.getElementById('pane-'+target) || document.getElementById('pane-'+target);
-    if(pane) pane.style.display = (pane.style.display === 'block' || pane.style.display === '') ? 'block' : 'block';
+    if(pane) pane.style.display = 'block';
   });
 });
 
-/* ---------- GitHub fetching with graceful fallback + filtering ---------- */
+/* ---------- GitHub fetch + filter ---------- */
 async function fetchJson(url){
   try{
     const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-    if(!res.ok) {
-      // rate limit or other issue
-      throw new Error(`HTTP ${res.status}`);
-    }
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch(err){
     console.warn('Fetch failed', url, err);
     return null;
   }
 }
-
 function filterExcludedRepos(repos){
   if(!repos || !repos.length) return [];
   const excluded = new Set(['sagheerakram', 'sagheerakram.github.io']);
@@ -234,80 +231,56 @@ function filterExcludedRepos(repos){
     return !excluded.has(name);
   });
 }
-
 async function renderGithubProfile(){
-  // show loader
   projectsLoader.style.display = '';
   const profile = await fetchJson(GITHUB_API);
   const repos = await fetchJson(REPOS_API);
-
-  // Update footer handle early
   githubHandleEl.textContent = GITHUB_USER;
 
-  // If profile failed, show a polite fallback using scraped summary text
   if(!profile){
-    aboutText.textContent = "About information unavailable (offline or GitHub rate-limited). Known interests: Python, automation, photography, game tools (NBT/Minecraft).";
+    aboutText.textContent = "About information unavailable (offline or GitHub rate-limited). Known interests: Python, automation, photography, game tools.";
   } else {
-    // Use profile.bio if present; otherwise fallback to a short static blurb
-    aboutText.textContent = profile.bio || "I'm a student exploring software engineering, automation, photography, and creative projects. I enjoy building tools and learning by doing.";
-    // Show quick social / location if available
-    skillTags.innerHTML = ''; // clear
+    aboutText.textContent = profile.bio || "I'm a student exploring software engineering, automation, photography, and creative projects.";
+    skillTags.innerHTML = '';
     if(profile.location) skillTags.appendChild(el('div',{class:'tag'}, profile.location));
     if(profile.blog) skillTags.appendChild(el('a',{class:'tag', href:profile.blog, target:'_blank'}, 'Website'));
-    // Add GitHub profile link
     skillTags.appendChild(el('a',{class:'tag', href:profile.html_url, target:'_blank'}, 'GitHub'));
   }
 
-  // Render repositories
-  projectsPane.innerHTML = ''; // clear loader
-
-  // Apply filtering to exclude specific repos
-  const filteredRepos = filterExcludedRepos(repos);
-
-  if(!filteredRepos || !filteredRepos.length){
-    // Attempt to show popular repo names scraped or fallback list
+  projectsPane.innerHTML = '';
+  const filtered = filterExcludedRepos(repos);
+  if(!filtered || !filtered.length){
     const fallback = [
       {name:'NBTHotbar', description:'Minecraft NBT tools', html_url:`https://github.com/${GITHUB_USER}/NBTHotbar`, stargazers_count:0, language:'Java'},
       {name:'anarchy', description:'Experimental project', html_url:`https://github.com/${GITHUB_USER}/anarchy`, stargazers_count:0, language:'TypeScript'},
       {name:'Synapse', description:'Research / automation tools', html_url:`https://github.com/${GITHUB_USER}/Synapse`, stargazers_count:0, language:'Python'}
     ];
     fallback.forEach(r => projectsPane.appendChild(renderRepoCard(r)));
-    projectsPane.appendChild(el('div',{class:'small'}, 'Note: Live GitHub repo list unavailable or filtered; showing best-effort fallback.'));
+    projectsPane.appendChild(el('div',{class:'small'}, 'Note: Live GitHub repo list unavailable or filtered; showing fallback.'));
     return;
   }
 
-  // Sort filtered repos by stargazers_count (desc) then recent push
-  filteredRepos.sort((a,b) => {
-    const sA = a.stargazers_count || 0;
-    const sB = b.stargazers_count || 0;
+  filtered.sort((a,b) => {
+    const sA = a.stargazers_count || 0, sB = b.stargazers_count || 0;
     if(sB - sA !== 0) return sB - sA;
     return new Date(b.pushed_at || 0) - new Date(a.pushed_at || 0);
   });
 
-  // popular top 6 (after filtering)
-  const top = filteredRepos.slice(0,6);
+  const top = filtered.slice(0,6);
   top.forEach(r => projectsPane.appendChild(renderRepoCard(r)));
-
-  // Add rest (light)
   const restHeader = el('div',{class:'small'}, 'More repositories (latest pushed):');
   projectsPane.appendChild(restHeader);
-  filteredRepos.slice(6, 20).forEach(r => {
+  filtered.slice(6, 20).forEach(r => {
     const c = el('div',{class:'card'}, el('strong',{}, r.name), el('div',{class:'small'}, r.language || '—'), el('p',{}, r.description || 'No description'));
     projectsPane.appendChild(c);
   });
-
-  // Populate small popular mini list for about pane
   popularMini.innerHTML = '';
-  top.forEach(r => {
-    popularMini.appendChild(el('div',{class:'card'}, el('strong',{}, r.name), el('div',{class:'small'}, r.language || '—')));
-  });
-
-  // Remove loader if present
+  top.forEach(r => popularMini.appendChild(el('div',{class:'card'}, el('strong',{}, r.name), el('div',{class:'small'}, r.language || '—'))));
   const loader = document.getElementById('projects-loader');
   if(loader) loader.remove();
 }
 
-/* ---------- Card renderer ---------- */
+/* ---------- Repo card ---------- */
 function renderRepoCard(repo){
   const name = repo.name || repo.full_name || 'repo';
   const desc = repo.description || '';
@@ -319,7 +292,6 @@ function renderRepoCard(repo){
   card.appendChild(el('h3',{}, name));
   card.appendChild(el('div',{class:'small'}, `${lang} • ⭐ ${stars}`));
   card.appendChild(el('p',{}, desc));
-
   const tags = el('div',{class:'tags'});
   if(repo.topics && repo.topics.length) repo.topics.slice(0,6).forEach(t=>tags.appendChild(el('div',{class:'tag'}, t)));
   card.appendChild(tags);
@@ -333,18 +305,16 @@ function renderRepoCard(repo){
       <p style="margin-top:12px"><a href="${url}" target="_blank">View on GitHub</a></p>
       <div style="margin-top:12px"><button class="btn btn-primary" id="copy-link">Copy Repo Link</button></div>
     `);
-    // attach copy handler after modal opens
     setTimeout(()=> {
       const copyBtn = document.getElementById('copy-link');
       if(copyBtn) copyBtn.addEventListener('click', () => {
-        navigator.clipboard?.writeText(url).then(()=> toast('Repo link copied to clipboard'), ()=> toast('Copy failed'));
+        navigator.clipboard?.writeText(url).then(()=> toast('Repo link copied'), ()=> toast('Copy failed'));
       });
     },30);
   });
 
   const btnClone = el('button',{class:'btn btn-ghost'}, 'Open');
   btnClone.addEventListener('click', () => window.open(url, '_blank'));
-
   const btnCopy = el('button',{class:'btn btn-ghost'}, 'Copy URL');
   btnCopy.addEventListener('click', () => {
     navigator.clipboard?.writeText(url).then(()=> toast('Link copied'), ()=> toast('Failed to copy'));
@@ -355,12 +325,13 @@ function renderRepoCard(repo){
   return card;
 }
 
-/* ---------- Contact behavior ---------- */
+/* ---------- Contact modal ---------- */
 function openContactModal(){
   const email = CONTACT_EMAIL;
   showModal(`
     <h2>Contact Sagheer</h2>
     <p class="muted">Email: <a href="mailto:${email}">${email}</a></p>
+    <p class="muted">Phone: ${CONTACT_PHONE}</p>
     <form id="contact-form" style="margin-top:12px">
       <label class="small">Your name</label><input name="name" placeholder="Your name" required/>
       <label class="small" style="margin-top:8px">Your email</label><input name="email" type="email" placeholder="you@example.com" required/>
@@ -371,7 +342,6 @@ function openContactModal(){
       </div>
     </form>
   `);
-  // attach handlers
   setTimeout(()=> {
     document.getElementById('close-contact')?.addEventListener('click', closeModal);
     const form = document.getElementById('contact-form');
@@ -385,7 +355,6 @@ function openContactModal(){
         const clipboardText = `Name: ${name}\nEmail: ${mail}\n\n${message}`;
         try {
           await navigator.clipboard.writeText(clipboardText);
-          // open mail client with subject and fallback body note
           window.location.href = `mailto:${email}?subject=Portfolio Inquiry from ${encodeURIComponent(name)}&body=${encodeURIComponent('Message copied to clipboard. Paste it here.')}`;
           toast('Copied message and opened mail client');
           closeModal();
@@ -397,34 +366,32 @@ function openContactModal(){
   }, 40);
 }
 
-/* ---------- Resume generation/print/download ---------- */
-function generateResumeHtml() {
-  // Made-up resume details per user's request, localized for Pakistan
+/* ---------- Resume generation (no "Generated" footer) ---------- */
+function generateResumeHtml(){
   const name = 'Sagheer Samiullah';
   const title = 'Student — Computer Science';
   const email = CONTACT_EMAIL;
-  const phone = '+92 300 0000000'; // placeholder phone
+  const phone = CONTACT_PHONE;
   const location = 'Karachi, Pakistan';
-  const summary = `Motivated Computer Science student with hands-on experience in scripting, basic algorithms, and creative tooling. Strong problem-solver who enjoys automation, game-related tooling, and competitive puzzles (Rubik's Cube). Seeking internship or junior roles to apply modern software engineering practices.`;
-  const skills = ['Python', 'C', 'Java', 'Algorithms', 'Data Structures', 'Automation', 'Git', 'Docker (basic)'];
+  const summary = `Motivated Computer Science student with hands-on experience in scripting, algorithms, and creative tooling. Strong problem-solver who enjoys automation and puzzles like the Rubik's Cube. Seeking internships and junior roles to apply software engineering skills.`;
+  const skills = ['Python','C','Java','Algorithms','Data Structures','Automation','Git','Docker (basic)'];
   const projects = [
-    { title: 'RubikSolver', desc: 'Python-based Rubik\'s Cube solver using heuristic search and visualizer. Demonstrates algorithm design and optimization.' },
-    { title: 'QuickAutomation', desc: 'Small automation toolkit to batch-process CSVs and generate reports using Python.' },
-    { title: 'Game-Tools Collection', desc: 'Utilities for extracting and editing game data formats (personal projects).' }
+    { title: 'RubikSolver', desc: 'Python-based Rubik\'s Cube solver using heuristic search and visualizer.' },
+    { title: 'QuickAutomation', desc: 'Automation toolkit for batch-processing CSVs and generating reports.' },
+    { title: 'Game-Tools', desc: 'Utilities for extracting/editing game data formats.' }
   ];
   const experience = [
-    { role: 'Student Research Assistant (made-up)', org: 'Karachi Institute of Technology — Research Lab', period: 'Mar 2024 - Present', desc: 'Assisted on automation scripts and small data-processing pipelines for lab experiments. Wrote Python utilities to clean and prepare datasets.' },
-    { role: 'Teaching Volunteer', org: 'Community Coding Bootcamp', period: 'Jun 2023 - Dec 2023', desc: 'Helped run introductory programming sessions for high-school students; prepared exercise sets and grading scripts.' }
+    { role: 'Student Research Assistant', org: 'Karachi Institute of Technology (made-up)', period: 'Mar 2024 - Present', desc: 'Built Python utilities to clean and prepare lab datasets, and automated experiment logging.' },
+    { role: 'Teaching Volunteer', org: 'Community Coding Bootcamp', period: 'Jun 2023 - Dec 2023', desc: 'Assisted with introductory programming lessons and exercise grading.' }
   ];
   const education = [
-    { school: 'Karachi Institute of Technology (made-up)', degree: 'B.S. Computer Science (In Progress)', years: '2022 - Present', notes: 'Relevant: Algorithms, Data Structures, Operating Systems, Database Systems.' },
-    { school: 'Central Science College (made-up)', degree: 'Higher Secondary Certificate — Pre-Engineering', years: '2020 - 2022', notes: 'Graduated with strong math and physics foundation.' }
+    { school: 'Karachi Institute of Technology (made-up)', degree: 'B.S. Computer Science (In Progress)', years: '2022 - Present', notes: 'Relevant coursework: Algorithms, OS, Databases.' },
+    { school: 'Central Science College (made-up)', degree: 'Higher Secondary Certificate — Pre-Engineering', years: '2020 - 2022', notes: 'Strong foundation in math and physics.' }
   ];
-  const certs = ['Certified Python Developer — Local Bootcamp (2024)', 'Introduction to Algorithms — Online Course (2023)'];
-  const hobbies = ['Rubik\'s Cube (solves under 2 minutes)', 'Digital Photography', 'Open-source tinkering'];
+  const certs = ['Certified Python Developer — Local Bootcamp (2024)','Intro to Algorithms — Online Course (2023)'];
+  const hobbies = ['Rubik\'s Cube (sub-2 min solves)','Digital Photography','Open-source tinkering'];
 
-  // Build a clean, printable HTML
-  const html = `
+  return `
   <!doctype html>
   <html>
   <head>
@@ -432,24 +399,20 @@ function generateResumeHtml() {
     <title>Resume — ${name}</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>
-      body{font-family: Inter, Arial, sans-serif; margin:0; padding:28px; background:#f6f7fb; color:#111}
-      .resume{max-width:850px;margin:0 auto;background:#fff;padding:28px;border-radius:8px;box-shadow:0 8px 30px rgba(10,12,20,0.08)}
-      header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+      body{font-family:Inter,Arial,sans-serif;margin:0;padding:28px;background:#f6f7fb;color:#111}
+      .resume{max-width:850px;margin:0 auto;background:#fff;padding:28px;border-radius:8px}
+      header{display:flex;justify-content:space-between;align-items:center}
       h1{margin:0;font-size:22px}
       .muted{color:#555;font-size:13px}
       .section{margin-top:18px}
-      .section h2{margin:0 0 8px 0;font-size:16px;color:#222}
-      .two-col{display:flex;gap:20px}
-      .col{flex:1}
+      .section h2{margin:0 0 8px 0;font-size:16px}
+      .two-col{display:flex;gap:20px;flex-wrap:wrap}
+      .col{flex:1;min-width:220px}
       ul{margin:6px 0 0 18px}
-      .meta{font-size:13px;color:#444}
       .badge{display:inline-block;padding:6px 10px;border-radius:14px;background:#eef0ff;color:#2b2b6b;font-weight:700;margin-right:8px;margin-top:8px}
       .project{margin-bottom:10px}
       footer{margin-top:20px;text-align:center;color:#777;font-size:13px}
-      @media print {
-        body{background: white}
-        .resume{box-shadow:none;border-radius:0}
-      }
+      @media print{ body{background:white} .resume{box-shadow:none;border-radius:0} }
     </style>
   </head>
   <body>
@@ -469,23 +432,22 @@ function generateResumeHtml() {
 
       <div class="section">
         <h2>Professional Summary</h2>
-        <p class="meta">${summary}</p>
+        <p class="muted">${summary}</p>
       </div>
 
       <div class="section two-col">
         <div class="col">
           <h2>Education</h2>
-          ${education.map(e => `
+          ${education.map(e=>`
             <div style="margin-bottom:10px">
               <strong>${e.school}</strong><div class="muted">${e.degree} • ${e.years}</div>
-              <div class="meta">${e.notes}</div>
+              <div class="muted">${e.notes}</div>
             </div>
           `).join('')}
         </div>
-
         <div class="col">
           <h2>Skills</h2>
-          ${skills.map(s => `<span class="badge">${s}</span>`).join('')}
+          ${skills.map(s=>`<span class="badge">${s}</span>`).join('')}
           <h2 style="margin-top:14px">Certifications</h2>
           <ul>${certs.map(c=>`<li>${c}</li>`).join('')}</ul>
         </div>
@@ -493,20 +455,20 @@ function generateResumeHtml() {
 
       <div class="section">
         <h2>Experience</h2>
-        ${experience.map(ex => `
+        ${experience.map(ex=>`
           <div style="margin-bottom:12px">
             <strong>${ex.role}</strong> <span class="muted">• ${ex.org} • ${ex.period}</span>
-            <p class="meta">${ex.desc}</p>
+            <p class="muted">${ex.desc}</p>
           </div>
         `).join('')}
       </div>
 
       <div class="section">
         <h2>Selected Projects</h2>
-        ${projects.map(p => `
+        ${projects.map(p=>`
           <div class="project">
             <strong>${p.title}</strong>
-            <div class="meta">${p.desc}</div>
+            <div class="muted">${p.desc}</div>
           </div>
         `).join('')}
       </div>
@@ -521,64 +483,57 @@ function generateResumeHtml() {
           <ul>${hobbies.map(h=>`<li>${h}</li>`).join('')}</ul>
         </div>
       </div>
-
-      <footer>Generated resume — ${name} • ${new Date().getFullYear()}</footer>
     </div>
+    <footer></footer>
   </body>
   </html>
   `;
-  return html;
 }
 
+/* ---------- Resume modal: render only resume + Download button ---------- */
 function openResumePreview(){
-  const html = generateResumeHtml();
-  // show inside modal with buttons
+  const resumeHtml = generateResumeHtml();
+  // show only resume iframe + single download (print) button
   showModal(`
-    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
       <h2>Resume — Sagheer Samiullah</h2>
       <div>
-        <button id="print-resume" class="btn btn-primary">Print / Save as PDF</button>
-        <button id="download-html" class="btn btn-ghost">Download HTML</button>
+        <button id="download-resume" class="btn btn-primary">Download / Save as PDF</button>
       </div>
     </div>
-    <div style="margin-top:12px;max-height:65vh;overflow:auto;background:linear-gradient(180deg,#f7f8fc,#fff);padding:12px;border-radius:8px">
-      <iframe id="resume-frame" style="width:100%;height:600px;border:0" srcdoc="${escapeHtml(generateResumeHtml())}"></iframe>
+    <div style="margin-top:12px;max-height:75vh;overflow:auto;padding:12px;border-radius:8px;background:linear-gradient(180deg,#f7f8fc,#fff)">
+      <iframe id="resume-frame" style="width:100%;height:720px;border:0"></iframe>
     </div>
   `);
 
-  // attach handlers
+  // set iframe content directly (rendered HTML — not escaped) so users see the resume only
+  const iframe = document.getElementById('resume-frame');
+  try {
+    iframe.srcdoc = resumeHtml;
+  } catch (e) {
+    // fallback for older browsers: write into iframe document
+    const doc = iframe.contentWindow?.document;
+    if(doc){
+      doc.open();
+      doc.write(resumeHtml);
+      doc.close();
+    }
+  }
+
+  // attach download/print handler
   setTimeout(()=> {
-    document.getElementById('print-resume').addEventListener('click', ()=> {
-      // open new window containing resume HTML and call print()
+    document.getElementById('download-resume').addEventListener('click', ()=> {
+      // open in new window and call print() — good UX for PDF export
       const win = window.open('', '_blank');
       win.document.open();
-      win.document.write(generateResumeHtml());
+      win.document.write(resumeHtml);
       win.document.close();
-      // wait a bit for rendering then print
+      // wait briefly then print
       setTimeout(()=> {
         try { win.print(); } catch(e) { console.warn('Print failed', e); }
       }, 300);
     });
-
-    document.getElementById('download-html').addEventListener('click', ()=> {
-      const data = generateResumeHtml();
-      const blob = new Blob([data], {type: 'text/html'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'SagheerSamiullah_Resume.html';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast('Downloaded resume HTML');
-    });
   }, 40);
-}
-
-// escape helper for embedding into srcdoc
-function escapeHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 /* ---------- Scratchpad persistence ---------- */
@@ -598,7 +553,6 @@ document.getElementById('export-scratch').addEventListener('click', () => {
 document.getElementById('view-projects').addEventListener('click', ()=> {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelector('.tab[data-target="projects"]').classList.add('active');
-  // ensure projects pane visible
   document.getElementById('pane-projects').style.display = 'grid';
   window.scrollTo({top:0, behavior:'smooth'});
 });
@@ -628,7 +582,6 @@ document.addEventListener('keydown', (e)=> {
 document.addEventListener('DOMContentLoaded', ()=> {
   const s = localStorage.getItem(SCRATCH_KEY) || '';
   document.getElementById('scratch').value = s;
-  // fetch GitHub data
   renderGithubProfile();
 });
 
