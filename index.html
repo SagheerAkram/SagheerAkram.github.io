@@ -1,57 +1,442 @@
-// Function to render the main section structure
-export function renderSection(title, icon) {
-    const section = document.createElement('section');
-    section.className = 'py-10';
-    section.innerHTML = `
-        <h2 class="text-4xl font-extrabold mb-8 flex items-center text-teal-400">
-            ${icon} <span class="ml-3">${title}</span>
-        </h2>
-        <div class="section-body"></div>
-    `;
-    return section;
-}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sagheer Akram — Full-Stack Portfolio (Single File)</title>
+<meta name="description" content="Sagheer Akram — Full-Stack, automation and creative projects. Single-file portfolio with live GitHub fetch." />
 
-// Universal Card Component for all content types
-export function CardComponent(data, type) {
-    let title, subtitle, body, footerTags, action;
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
-    if (type === 'project') {
-        title = data.name;
-        subtitle = data.type || 'Project';
-        body = data.desc;
-        footerTags = data.tags;
-        action = `<button class="text-sm text-teal-400 hover:text-teal-300 transition">View Repo (${data.stars}⭐)</button>`;
-    } else if (type === 'experience') {
-        title = data.role;
-        subtitle = `${data.company} (${data.period})`;
-        body = data.desc;
-        footerTags = [];
-    } else if (type === 'education') {
-        title = data.school;
-        subtitle = data.degree;
-        body = `Years: ${data.years}`;
-        footerTags = [];
-    } else if (type === 'article') {
-        title = data.title;
-        subtitle = data.date;
-        body = data.body.substring(0, 100) + '...';
-        footerTags = data.tags;
-        action = `<button class="text-sm text-gray-500 hover:text-teal-400 transition">Read Article</button>`;
-    }
-
-    // Tailwind CSS for the component look and feel
-    return `
-        <div class="bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-2xl transition duration-500 border border-gray-700">
-            <h4 class="text-xl font-bold text-teal-400 mb-2">${title}</h4>
-            <p class="text-sm text-gray-400 mb-4">${subtitle}</p>
-            <p class="text-base text-gray-300 mb-4">${body}</p>
-            
-            ${footerTags && footerTags.length > 0 ? 
-                `<div class="flex flex-wrap gap-2 mb-4">
-                    ${footerTags.map(tag => `<span class="px-2 py-1 text-xs font-medium bg-gray-700 text-teal-300 rounded">${tag}</span>`).join('')}
-                </div>` : ''
-            }
-            ${action ? action : ''}
+<style>
+  :root{
+    --bg:#071127; --panel:rgba(255,255,255,0.03);
+    --muted:#9aa6b4; --accent:#6f66ff; --accent2:#00c1a8;
+    --text:#e6eef8; --radius:12px; --max-w:1100px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:
+   radial-gradient(800px 400px at 10% 10%, rgba(111,102,255,0.04), transparent),
+   linear-gradient(180deg,var(--bg),#041225);
+   font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--text);
+   -webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+  a{color:var(--accent)}
+  .wrap{max-width:var(--max-w);margin:28px auto;padding:22px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;font-weight:900;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#041221}
+  .brand h1{font-size:18px;margin:0}
+  nav{display:flex;gap:8px;align-items:center}
+  .nav-btn{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+  .hero{display:flex;gap:20px;padding:20px;border-radius:var(--radius);background:var(--panel);border:1px solid rgba(255,255,255,0.04)}
+  .avatar{width:110px;height:110px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:900;color:#041221;font-size:32px}
+  .hero h2{margin:0;font-size:20px}
+  .muted{color:var(--muted);font-size:14px}
+  .cta{display:flex;gap:10px;margin-top:12px}
+  .btn{padding:10px 14px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
+  .btn-primary{background:var(--accent);color:#041221}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.05);color:var(--text)}
+  .tabs{display:flex;gap:8px;margin-top:18px;border-bottom:1px solid rgba(255,255,255,0.04);padding-bottom:12px;overflow:auto}
+  .tab{padding:8px 12px;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;font-weight:700}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:18px}
+  .card{padding:16px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .tag{padding:6px 10px;border-radius:999px;background:rgba(111,102,255,0.08);color:var(--accent);font-weight:700;font-size:12px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal.open{display:flex}
+  .modal-content{background:linear-gradient(180deg,#071225,#041424);padding:20px;border-radius:12px;max-width:900px;width:100%;max-height:90vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
+  #loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;color:var(--muted)}
+  .spinner{width:30px;height:30px;border-radius:50%;border:4px solid rgba(255,255,255,0.12);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-bottom:8px}
+  @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  footer{margin-top:32px;text-align:center;color:var(--muted)}
+  input,textarea{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:8px;color:var(--text);width:100%}
+  .small{font-size:13px;color:var(--muted)}
+  @media(max-width:880px){.hero{flex-direction:column;align-items:center;text-align:center}}
+</style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">SA</div>
+        <div>
+          <h1 id="site-title">Sagheer Akram</h1>
+          <div class="small">Full-Stack Developer • Automation • Creative Projects</div>
         </div>
-    `;
+      </div>
+
+      <nav aria-label="Main">
+        <button class="nav-btn" id="btn-contact-top">Contact</button>
+        <button class="nav-btn" id="btn-resume">Resume</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="intro-title">
+        <div class="avatar" aria-hidden="true">SA</div>
+        <div style="flex:1">
+          <h2 id="intro-title">Hi — I'm <strong style="color:var(--accent)">Sagheer</strong>.</h2>
+          <p class="muted" id="intro-blurb">Student & hobbyist engineer exploring software, automation, photography, and creative projects. I build tools and experiments — focused on practical scripting, Python, and game-related tooling.</p>
+
+          <div class="cta" role="region" aria-label="Primary actions">
+            <button class="btn btn-primary" id="view-projects">View Projects</button>
+            <button class="btn btn-ghost" id="contact-me">Contact Me</button>
+            <button class="btn btn-ghost" id="copy-email">Copy Email</button>
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="Sections">
+            <button class="tab active" data-target="projects">Projects</button>
+            <button class="tab" data-target="about">About</button>
+            <button class="tab" data-target="blog">Blog</button>
+            <div style="margin-left:auto" class="small">GitHub data fetched live</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panes -->
+      <div id="panes">
+        <section id="pane-projects" class="grid" aria-live="polite" style="margin-top:18px">
+          <!-- loader then project cards -->
+          <div id="projects-loader" class="card" style="grid-column:1/-1">
+            <div id="loader"><div class="spinner" aria-hidden="true"></div><div class="small">Loading GitHub profile & repositories…</div></div>
+          </div>
+        </section>
+
+        <section id="pane-about" class="card" style="display:none;margin-top:18px">
+          <h3>About</h3>
+          <p class="muted" id="about-text">Loading...</p>
+          <h4 style="margin-top:12px">Skills & Interests</h4>
+          <div id="skill-tags" class="tags"></div>
+          <h4 style="margin-top:12px">Popular Repos</h4>
+          <div id="popular-mini" class="grid"></div>
+        </section>
+
+        <section id="pane-blog" class="card" style="display:none;margin-top:18px">
+          <h3>Notes & Articles</h3>
+          <div id="articles" class="grid"></div>
+          <details style="margin-top:12px">
+            <summary class="small">Quick scratchpad (saved locally)</summary>
+            <textarea id="scratch" placeholder="Write notes, drafts..."></textarea>
+            <div style="margin-top:8px;display:flex;gap:8px"><button class="btn btn-primary" id="save-scratch">Save</button><button class="btn btn-ghost" id="export-scratch">Export</button></div>
+          </details>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="small">© 2025 Sagheer Akram — Live GitHub profile: <span id="github-handle">sagheerakram</span></div>
+    </footer>
+  </div>
+
+  <!-- modal -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-content" role="document" tabindex="-1">
+      <button id="modal-close" class="btn btn-ghost" style="float:right">Close</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+<script>
+/*
+  Single-file behavior:
+  - Fetches profile and repos from GitHub for `sagheerakram`
+  - Renders projects, about text, repos
+  - Contact button opens modal + mailto + clipboard fallback
+  - Graceful when API rate-limited / offline
+  - Filters out repos named 'sagheerakram' and 'sagheerakram.github.io'
+*/
+
+/* ---------- CONFIG ---------- */
+const GITHUB_USER = 'sagheerakram'; // using lowercase to match common repo name patterns
+const GITHUB_API = `https://api.github.com/users/${GITHUB_USER}`;
+const REPOS_API = `https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`;
+const CONTACT_EMAIL = 'sagheersamiullah02@gmail.com'; // updated email everywhere
+
+/* ---------- DOM refs ---------- */
+const projectsPane = document.getElementById('pane-projects');
+const projectsLoader = document.getElementById('projects-loader');
+const aboutText = document.getElementById('about-text');
+const skillTags = document.getElementById('skill-tags');
+const popularMini = document.getElementById('popular-mini');
+const githubHandleEl = document.getElementById('github-handle');
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modal-body');
+
+/* ---------- small helpers ---------- */
+function el(tag, attrs={}, ...children){
+  const e = document.createElement(tag);
+  for(const k in attrs){
+    if(k==='class') e.className=attrs[k];
+    else if(k==='html') e.innerHTML=attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  (children||[]).forEach(c => e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+  return e;
 }
+function showModal(html){
+  modalBody.innerHTML = html;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+  modal.querySelector('.modal-content')?.focus();
+}
+function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if(e.target===modal) closeModal(); });
+
+function toast(msg, ms=2400){
+  const t = el('div',{class:'card small'}, msg);
+  t.style.position='fixed'; t.style.right='20px'; t.style.bottom='20px'; t.style.zIndex=1200;
+  document.body.appendChild(t);
+  setTimeout(()=> t.style.opacity='0', ms-300);
+  setTimeout(()=> t.remove(), ms);
+}
+
+/* ---------- Tab switching (simple) ---------- */
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.target;
+    document.querySelectorAll('#panes > section, #panes > div.card').forEach(p=>p.style.display='none');
+    const pane = document.getElementById('pane-'+target) || document.getElementById('pane-'+target);
+    if(pane) pane.style.display = (pane.style.display === 'block' || pane.style.display === '') ? 'block' : 'block';
+  });
+});
+
+/* ---------- GitHub fetching with graceful fallback + filtering ---------- */
+async function fetchJson(url){
+  try{
+    const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    if(!res.ok) {
+      // rate limit or other issue
+      throw new Error(`HTTP ${res.status}`);
+    }
+    return await res.json();
+  } catch(err){
+    console.warn('Fetch failed', url, err);
+    return null;
+  }
+}
+
+function filterExcludedRepos(repos){
+  if(!repos || !repos.length) return [];
+  const excluded = new Set(['sagheerakram', 'sagheerakram.github.io']);
+  return repos.filter(r => {
+    const name = (r.name || '').toLowerCase();
+    return !excluded.has(name);
+  });
+}
+
+async function renderGithubProfile(){
+  // show loader
+  projectsLoader.style.display = '';
+  const profile = await fetchJson(GITHUB_API);
+  const repos = await fetchJson(REPOS_API);
+
+  // Update footer handle early
+  githubHandleEl.textContent = GITHUB_USER;
+
+  // If profile failed, show a polite fallback using scraped summary text
+  if(!profile){
+    aboutText.textContent = "About information unavailable (offline or GitHub rate-limited). Known interests: Python, automation, photography, game tools (NBT/Minecraft).";
+  } else {
+    // Use profile.bio if present; otherwise fallback to a short static blurb
+    aboutText.textContent = profile.bio || "I'm a student exploring software engineering, automation, photography, and creative projects. I enjoy building tools and learning by doing.";
+    // Show quick social / location if available
+    skillTags.innerHTML = ''; // clear
+    if(profile.location) skillTags.appendChild(el('div',{class:'tag'}, profile.location));
+    if(profile.blog) skillTags.appendChild(el('a',{class:'tag', href:profile.blog, target:'_blank'}, 'Website'));
+    // Add GitHub profile link
+    skillTags.appendChild(el('a',{class:'tag', href:profile.html_url, target:'_blank'}, 'GitHub'));
+  }
+
+  // Render repositories
+  projectsPane.innerHTML = ''; // clear loader
+
+  // Apply filtering to exclude specific repos
+  const filteredRepos = filterExcludedRepos(repos);
+
+  if(!filteredRepos || !filteredRepos.length){
+    // Attempt to show popular repo names scraped or fallback list
+    const fallback = [
+      {name:'NBTHotbar', description:'Minecraft NBT tools', html_url:`https://github.com/${GITHUB_USER}/NBTHotbar`, stargazers_count:0, language:'Java'},
+      {name:'anarchy', description:'Experimental project', html_url:`https://github.com/${GITHUB_USER}/anarchy`, stargazers_count:0, language:'TypeScript'},
+      {name:'Synapse', description:'Research / automation tools', html_url:`https://github.com/${GITHUB_USER}/Synapse`, stargazers_count:0, language:'Python'}
+    ];
+    fallback.forEach(r => projectsPane.appendChild(renderRepoCard(r)));
+    projectsPane.appendChild(el('div',{class:'small'}, 'Note: Live GitHub repo list unavailable or filtered; showing best-effort fallback.'));
+    return;
+  }
+
+  // Sort filtered repos by stargazers_count (desc) then recent push
+  filteredRepos.sort((a,b) => {
+    const sA = a.stargazers_count || 0;
+    const sB = b.stargazers_count || 0;
+    if(sB - sA !== 0) return sB - sA;
+    return new Date(b.pushed_at || 0) - new Date(a.pushed_at || 0);
+  });
+
+  // popular top 6 (after filtering)
+  const top = filteredRepos.slice(0,6);
+  top.forEach(r => projectsPane.appendChild(renderRepoCard(r)));
+
+  // Add rest (light)
+  const restHeader = el('div',{class:'small'}, 'More repositories (latest pushed):');
+  projectsPane.appendChild(restHeader);
+  filteredRepos.slice(6, 20).forEach(r => {
+    const c = el('div',{class:'card'}, el('strong',{}, r.name), el('div',{class:'small'}, r.language || '—'), el('p',{}, r.description || 'No description'));
+    projectsPane.appendChild(c);
+  });
+
+  // Populate small popular mini list for about pane
+  popularMini.innerHTML = '';
+  top.forEach(r => {
+    popularMini.appendChild(el('div',{class:'card'}, el('strong',{}, r.name), el('div',{class:'small'}, r.language || '—')));
+  });
+
+  // Remove loader if present
+  const loader = document.getElementById('projects-loader');
+  if(loader) loader.remove();
+}
+
+/* ---------- Card renderer ---------- */
+function renderRepoCard(repo){
+  const name = repo.name || repo.full_name || 'repo';
+  const desc = repo.description || '';
+  const stars = repo.stargazers_count || 0;
+  const lang = repo.language || '—';
+  const url = repo.html_url || `https://github.com/${GITHUB_USER}/${name}`;
+
+  const card = el('div',{class:'card'});
+  card.appendChild(el('h3',{}, name));
+  card.appendChild(el('div',{class:'small'}, `${lang} • ⭐ ${stars}`));
+  card.appendChild(el('p',{}, desc));
+
+  const tags = el('div',{class:'tags'});
+  if(repo.topics && repo.topics.length) repo.topics.slice(0,6).forEach(t=>tags.appendChild(el('div',{class:'tag'}, t)));
+  card.appendChild(tags);
+
+  const btnView = el('button',{class:'btn btn-ghost'}, 'Details');
+  btnView.addEventListener('click', () => {
+    showModal(`
+      <h2>${name}</h2>
+      <div class="small">${lang} • ⭐ ${stars}</div>
+      <p style="margin-top:12px">${desc}</p>
+      <p style="margin-top:12px"><a href="${url}" target="_blank">View on GitHub</a></p>
+      <div style="margin-top:12px"><button class="btn btn-primary" id="copy-link">Copy Repo Link</button></div>
+    `);
+    // attach copy handler after modal opens
+    setTimeout(()=> {
+      const copyBtn = document.getElementById('copy-link');
+      if(copyBtn) copyBtn.addEventListener('click', () => {
+        navigator.clipboard?.writeText(url).then(()=> toast('Repo link copied to clipboard'), ()=> toast('Copy failed'));
+      });
+    },30);
+  });
+
+  const btnClone = el('button',{class:'btn btn-ghost'}, 'Open');
+  btnClone.addEventListener('click', () => window.open(url, '_blank'));
+
+  const btnCopy = el('button',{class:'btn btn-ghost'}, 'Copy URL');
+  btnCopy.addEventListener('click', () => {
+    navigator.clipboard?.writeText(url).then(()=> toast('Link copied'), ()=> toast('Failed to copy'));
+  });
+
+  const actionRow = el('div', {style:'display:flex;gap:8px;margin-top:12px'}, btnView, btnClone, btnCopy);
+  card.appendChild(actionRow);
+  return card;
+}
+
+/* ---------- Contact behavior ---------- */
+function openContactModal(){
+  const email = CONTACT_EMAIL;
+  showModal(`
+    <h2>Contact Sagheer</h2>
+    <p class="muted">Email: <a href="mailto:${email}">${email}</a></p>
+    <form id="contact-form" style="margin-top:12px">
+      <label class="small">Your name</label><input name="name" placeholder="Your name" required/>
+      <label class="small" style="margin-top:8px">Your email</label><input name="email" type="email" placeholder="you@example.com" required/>
+      <label class="small" style="margin-top:8px">Message</label><textarea name="message" placeholder="Hi Sagheer..." required></textarea>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn btn-primary" type="submit">Copy & Open Mail</button>
+        <button class="btn btn-ghost" type="button" id="close-contact">Close</button>
+      </div>
+    </form>
+  `);
+  // attach handlers
+  setTimeout(()=> {
+    document.getElementById('close-contact')?.addEventListener('click', closeModal);
+    const form = document.getElementById('contact-form');
+    if(form){
+      form.addEventListener('submit', async (ev)=> {
+        ev.preventDefault();
+        const fd = new FormData(form);
+        const name = fd.get('name');
+        const mail = fd.get('email');
+        const message = fd.get('message');
+        const clipboardText = `Name: ${name}\nEmail: ${mail}\n\n${message}`;
+        try {
+          await navigator.clipboard.writeText(clipboardText);
+          // open mail client with subject and fallback body note
+          window.location.href = `mailto:${email}?subject=Portfolio Inquiry from ${encodeURIComponent(name)}&body=${encodeURIComponent('Message copied to clipboard. Paste it here.')}`;
+          toast('Copied message and opened mail client');
+          closeModal();
+        } catch (err) {
+          toast('Copy failed — please copy manually');
+        }
+      });
+    }
+  }, 40);
+}
+
+/* ---------- Scratchpad persistence ---------- */
+const SCRATCH_KEY = 'sagheer:scratch';
+document.getElementById('save-scratch').addEventListener('click', () => {
+  const txt = document.getElementById('scratch').value || '';
+  localStorage.setItem(SCRATCH_KEY, txt);
+  toast('Saved locally');
+});
+document.getElementById('export-scratch').addEventListener('click', () => {
+  const data = localStorage.getItem(SCRATCH_KEY) || '';
+  const blob = new Blob([data], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'scratch.txt'; a.click(); URL.revokeObjectURL(a.href);
+});
+
+/* ---------- initial wiring ---------- */
+document.getElementById('view-projects').addEventListener('click', ()=> {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.tab[data-target="projects"]').classList.add('active');
+  // ensure projects pane visible
+  document.getElementById('pane-projects').style.display = 'grid';
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+document.getElementById('contact-me').addEventListener('click', openContactModal);
+document.getElementById('btn-contact-top').addEventListener('click', openContactModal);
+document.getElementById('copy-email').addEventListener('click', async ()=> {
+  const email = CONTACT_EMAIL;
+  try {
+    await navigator.clipboard.writeText(email);
+    toast('Email copied to clipboard');
+  } catch {
+    toast('Copy failed — please select and copy manually');
+  }
+});
+
+// keyboard accessibility: ESC close modal
+document.addEventListener('keydown', (e)=> {
+  if(e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+});
+
+// Load scratch if present
+document.addEventListener('DOMContentLoaded', ()=> {
+  const s = localStorage.getItem(SCRATCH_KEY) || '';
+  document.getElementById('scratch').value = s;
+  // fetch GitHub data
+  renderGithubProfile();
+});
+
+</script>
+</body>
+</html>
