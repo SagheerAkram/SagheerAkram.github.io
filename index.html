@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sagheer — Portfolio</title>
+  <meta name="description" content="Sagheer's portfolio — projects, automation, creativity."/>
+  <style>
+    :root{
+      --bg:#06060b;
+      --card:#0f1724;
+      --muted:#9aa4b2;
+      --accent:#7cf7ff;
+      --glow: rgba(124,247,255,0.14);
+      --glass: rgba(255,255,255,0.03);
+      --radius:14px;
+      --maxw:1000px;
+      --accent-2: #9b8cff;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #e6eef6;
+      background: linear-gradient(180deg, var(--bg) 0%, #02020a 100%);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-x:hidden;
+    }
+
+    #bgcanvas{position:fixed; inset:0; z-index:0; display:block;}
+
+    .container{
+      position:relative;
+      z-index:2;
+      max-width:var(--maxw);
+      margin:40px auto;
+      padding:40px;
+      box-sizing:border-box;
+    }
+
+    .header{
+      display:flex;
+      gap:20px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:28px;
+    }
+    .brand{
+      display:flex;
+      gap:16px;
+      align-items:center;
+    }
+    .logo{
+      width:64px;height:64px;border-radius:12px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      box-shadow:0 6px 30px var(--glow), inset 0 -6px 20px rgba(0,0,0,0.25);
+      display:grid;place-items:center;font-weight:700;color:#012;
+      transform:rotate(-6deg);
+    }
+    .title h1{font-size:20px;margin:0}
+    .title p{margin:0;color:var(--muted);font-size:13px}
+
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:28px;
+      border-radius:var(--radius);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.03);
+      display:flex;
+      gap:24px;
+      align-items:center;
+      margin-bottom:28px;
+      overflow:hidden;
+    }
+    .hero-left{flex:1}
+    .hero-right{width:220px;flex-shrink:0}
+    .intro h2{margin:0 0 8px 0;font-size:28px}
+    .intro p{margin:0;color:var(--muted)}
+
+    .btns{margin-top:16px;display:flex;gap:10px}
+    .btn{
+      padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600;
+      background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      color:var(--accent);box-shadow:0 6px 18px rgba(124,247,255,0.06);
+      transition:transform .22s ease, box-shadow .22s ease;
+    }
+    .btn:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(124,247,255,0.09)}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+      gap:18px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+      border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+      transition:transform .32s cubic-bezier(.2,.9,.2,1), box-shadow .32s;
+      transform-origin:center;
+      position:relative; overflow:hidden;
+    }
+    .card:hover{transform:translateY(-10px) rotate(-0.4deg); box-shadow: 0 26px 60px rgba(0,0,0,0.7);}
+
+    .card::after{
+      content:"";
+      position:absolute; left:-40%; top:-40%; width:200%; height:200%;
+      background: radial-gradient(circle at 20% 20%, rgba(124,247,255,0.06), transparent 6%),
+                  radial-gradient(circle at 80% 80%, rgba(155,140,255,0.04), transparent 8%);
+      mix-blend-mode: screen; pointer-events:none;
+    }
+
+    .card h3{margin:0 0 8px 0;font-size:16px}
+    .card p{margin:0;color:var(--muted);font-size:13px}
+    .card .meta{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+    .tag{
+      background:rgba(255,255,255,0.02); padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted);
+      border:1px solid rgba(255,255,255,0.02)
+    }
+    .card a.project-link{
+      display:inline-block;margin-top:12px;text-decoration:none;padding:8px 12px;border-radius:10px;
+      background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:#03141a;font-weight:700;
+      box-shadow:0 10px 28px rgba(124,247,255,0.08); transition:transform .18s;
+    }
+    .card a.project-link:hover{transform:translateY(-4px)}
+
+    .footer{margin-top:36px;color:var(--muted);text-align:center;font-size:13px;padding-bottom:60px}
+
+    .fade-up{animation:fadeUp .7s cubic-bezier(.2,.9,.2,1) both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none}}
+
+    @media (max-width:720px){
+      .hero{flex-direction:column;align-items:flex-start}
+      .hero-right{width:100%}
+      .container{padding:22px}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bgcanvas"></canvas>
+
+  <div class="container">
+    <div class="header fade-up">
+      <div class="brand">
+        <div class="logo">SA</div>
+        <div class="title">
+          <h1>Sagheer</h1>
+          <p>Student • Automation • Creative projects</p>
+        </div>
+      </div>
+      <div class="links" style="display:flex;gap:10px;align-items:center">
+        <a class="btn" href="https://github.com/SagheerAkram" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+
+    <section class="hero fade-up" style="animation-delay:.06s">
+      <div class="hero-left">
+        <div class="intro">
+          <h2>Hi — I'm Sagheer.</h2>
+          <p>Welcome to my projects showcase. Explore my work below.</p>
+        </div>
+        <div class="btns">
+          <a class="btn" href="#projects">See Projects</a>
+          <a class="btn" href="mailto:sagheersamiullah02@gmail.com">Contact</a>
+        </div>
+      </div>
+      <div class="hero-right">
+        <!-- Optional: you can place an image or avatar here -->
+      </div>
+    </section>
+
+    <h3 id="projects" style="margin-top:14px; margin-bottom:12px">Projects</h3>
+    <div class="grid" id="projectsGrid"></div>
+
+    <div class="footer">
+      Built with ❤️ • GitHub: <a href="https://github.com/SagheerAkram" style="color:var(--accent)">@SagheerAkram</a>
+    </div>
+  </div>
+
+<script>
+const projects = [
+  { title: "NBTHotbar", desc: "PROJECT DESCRIPTION HERE", url: "https://github.com/SagheerAkram/NBTHotbar", tags:["Minecraft","NBT","Tools"] },
+  { title: "anarchy", desc: "PROJECT DESCRIPTION HERE", url: "https://github.com/SagheerAkram/anarchy", tags:["Protocol","Python"] },
+  { title: "Synapse", desc: "PROJECT DESCRIPTION HERE", url: "https://github.com/SagheerAkram/Synapse", tags:["AI","Python"] },
+  { title: "Chessfinity", desc: "PROJECT DESCRIPTION HERE", url: "https://github.com/SagheerAkram/Chessfinity", tags:["Game","TypeScript"] },
+  { title: "NBT-Hotbar-Manager", desc: "PROJECT DESCRIPTION HERE", url: "https://github.com/SagheerAkram/NBT-Hotbar-Manager", tags:["Minecraft","Collection"] },
+  // Add more projects here as needed
+];
+
+const grid = document.getElementById('projectsGrid');
+projects.forEach((p, i) => {
+  const card = document.createElement('div');
+  card.className = 'card fade-up';
+  card.style.animationDelay = (i*80)+'ms';
+  card.innerHTML = `
+    <h3>${escapeHtml(p.title)}</h3>
+    <p>${escapeHtml(p.desc)}</p>
+    <div class="meta">
+      ${ (p.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('') }
+    </div>
+    <a class="project-link" href="${p.url}" target="_blank" rel="noopener">View on GitHub</a>
+  `;
+  grid.appendChild(card);
+});
+
+function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+
+const canvas = document.getElementById('bgcanvas');
+const ctx = canvas.getContext('2d');
+let w = canvas.width = innerWidth;
+let h = canvas.height = innerHeight;
+const particles = [];
+const PARTICLE_COUNT = Math.round((Math.min(w,h)/100) * 12);
+
+window.addEventListener('resize', ()=>{ w = canvas.width = innerWidth; h = canvas.height = innerHeight; initParticles(); });
+
+function initParticles(){
+  particles.length = 0;
+  for(let i=0;i<PARTICLE_COUNT;i++){
+    particles.push({
+      x: Math.random()*w,
+      y: Math.random()*h,
+      vx: (Math.random()-0.5)*0.2,
+      vy: (Math.random()-0.5)*0.2,
+      r: 0.8 + Math.random()*2.8,
+      hue: 180 + Math.random()*120,
+      alpha: 0.08 + Math.random()*0.22
+    });
+  }
+}
+initParticles();
+
+function draw(){
+  ctx.clearRect(0,0,w,h);
+  const g = ctx.createLinearGradient(0,0,w,h);
+  g.addColorStop(0, 'rgba(2,6,15,0.25)');
+  g.addColorStop(1, 'rgba(1,2,8,0.4)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
+
+  for(let p of particles){
+    p.x += p.vx; p.y += p.vy;
+    if(p.x < -50) p.x = w + 50;
+    if(p.x > w + 50) p.x = -50;
+    if(p.y < -50) p.y = h + 50;
+    if(p.y > h + 50) p.y = -50;
+
+    const rg = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*12);
+    rg.addColorStop(0, `hsla(${p.hue}, 85%, 60%, ${p.alpha})`);
+    rg.addColorStop(0.15, `hsla(${p.hue}, 85%, 60%, ${p.alpha*0.45})`);
+    rg.addColorStop(0.35, `hsla(${p.hue}, 85%, 60%, ${p.alpha*0.09})`);
+    rg.addColorStop(1, 'transparent');
+
+    ctx.beginPath();
+    ctx.fillStyle = rg;
+    ctx.arc(p.x,p.y,p.r*6,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const a = particles[i], b = particles[j];
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist < 120){
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(140,220,255,${0.02*(120 - dist)})`;
+        ctx.lineWidth = 1;
+        ctx.moveTo(a.x,a.y);
+        ctx.lineTo(b.x,b.y);
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+window.addEventListener('mousemove', e=>{
+  for(let p of particles){
+    const dx = p.x - e.clientX, dy = p.y - e.clientY;
+    const d = Math.sqrt(dx*dx + dy*dy);
+    if(d < 100){
+      p.vx += (dx/d)*0.25;
+      p.vy += (dy/d)*0.25;
+    }
+  }
+});
+</script>
+</body>
+</html>
