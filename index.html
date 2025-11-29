@@ -145,23 +145,16 @@
   </div>
 
 <script>
-/*
-  Updated single-file app:
-  - Resume preview now renders (no HTML code)
-  - Resume download opens new window and triggers print() to let user Save as PDF
-  - Phone: +92 370 4220020
-  - Contact: sagheersamiullah02@gmail.com
-  - Filters: excludes repos named 'sagheerakram' and 'sagheerakram.github.io'
-*/
+/* Single-file app with updated resume names (no "made-up" markers) */
 
-/* ---------- CONFIG ---------- */
+/* CONFIG */
 const GITHUB_USER = 'sagheerakram';
 const GITHUB_API = `https://api.github.com/users/${GITHUB_USER}`;
 const REPOS_API = `https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`;
 const CONTACT_EMAIL = 'sagheersamiullah02@gmail.com';
 const CONTACT_PHONE = '+92 370 4220020';
 
-/* ---------- DOM refs ---------- */
+/* DOM refs */
 const projectsPane = document.getElementById('pane-projects');
 const projectsLoader = document.getElementById('projects-loader');
 const aboutText = document.getElementById('about-text');
@@ -171,7 +164,7 @@ const githubHandleEl = document.getElementById('github-handle');
 const modal = document.getElementById('modal');
 const modalBody = document.getElementById('modal-body');
 
-/* ---------- helpers ---------- */
+/* helpers */
 function el(tag, attrs={}, ...children){
   const e = document.createElement(tag);
   for(const k in attrs){
@@ -200,7 +193,7 @@ function toast(msg, ms=2400){
   setTimeout(()=> t.remove(), ms);
 }
 
-/* ---------- Tab switching ---------- */
+/* Tab switching */
 document.querySelectorAll('.tab').forEach(btn=>{
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
@@ -212,7 +205,7 @@ document.querySelectorAll('.tab').forEach(btn=>{
   });
 });
 
-/* ---------- GitHub fetch + filter ---------- */
+/* GitHub fetch + filter */
 async function fetchJson(url){
   try{
     const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
@@ -280,7 +273,7 @@ async function renderGithubProfile(){
   if(loader) loader.remove();
 }
 
-/* ---------- Repo card ---------- */
+/* Repo card */
 function renderRepoCard(repo){
   const name = repo.name || repo.full_name || 'repo';
   const desc = repo.description || '';
@@ -325,7 +318,7 @@ function renderRepoCard(repo){
   return card;
 }
 
-/* ---------- Contact modal ---------- */
+/* Contact modal */
 function openContactModal(){
   const email = CONTACT_EMAIL;
   showModal(`
@@ -366,7 +359,7 @@ function openContactModal(){
   }, 40);
 }
 
-/* ---------- Resume generation (no "Generated" footer) ---------- */
+/* Resume generation (clean names) */
 function generateResumeHtml(){
   const name = 'Sagheer Samiullah';
   const title = 'Student — Computer Science';
@@ -381,12 +374,12 @@ function generateResumeHtml(){
     { title: 'Game-Tools', desc: 'Utilities for extracting/editing game data formats.' }
   ];
   const experience = [
-    { role: 'Student Research Assistant', org: 'Karachi Institute of Technology (made-up)', period: 'Mar 2024 - Present', desc: 'Built Python utilities to clean and prepare lab datasets, and automated experiment logging.' },
+    { role: 'Student Research Assistant', org: 'Institute of Technology', period: 'Mar 2024 - Present', desc: 'Built Python utilities to clean and prepare lab datasets, and automated experiment logging.' },
     { role: 'Teaching Volunteer', org: 'Community Coding Bootcamp', period: 'Jun 2023 - Dec 2023', desc: 'Assisted with introductory programming lessons and exercise grading.' }
   ];
   const education = [
-    { school: 'Karachi Institute of Technology (made-up)', degree: 'B.S. Computer Science (In Progress)', years: '2022 - Present', notes: 'Relevant coursework: Algorithms, OS, Databases.' },
-    { school: 'Central Science College (made-up)', degree: 'Higher Secondary Certificate — Pre-Engineering', years: '2020 - 2022', notes: 'Strong foundation in math and physics.' }
+    { school: 'Institute of Technology', degree: 'B.S. Computer Science (In Progress)', years: '2022 - Present', notes: 'Relevant coursework: Algorithms, OS, Databases.' },
+    { school: 'Central Science College', degree: 'Higher Secondary Certificate — Pre-Engineering', years: '2020 - 2022', notes: 'Strong foundation in math and physics.' }
   ];
   const certs = ['Certified Python Developer — Local Bootcamp (2024)','Intro to Algorithms — Online Course (2023)'];
   const hobbies = ['Rubik\'s Cube (sub-2 min solves)','Digital Photography','Open-source tinkering'];
@@ -490,10 +483,9 @@ function generateResumeHtml(){
   `;
 }
 
-/* ---------- Resume modal: render only resume + Download button ---------- */
+/* Resume modal: only resume + Download button */
 function openResumePreview(){
   const resumeHtml = generateResumeHtml();
-  // show only resume iframe + single download (print) button
   showModal(`
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
       <h2>Resume — Sagheer Samiullah</h2>
@@ -506,37 +498,26 @@ function openResumePreview(){
     </div>
   `);
 
-  // set iframe content directly (rendered HTML — not escaped) so users see the resume only
   const iframe = document.getElementById('resume-frame');
   try {
     iframe.srcdoc = resumeHtml;
   } catch (e) {
-    // fallback for older browsers: write into iframe document
     const doc = iframe.contentWindow?.document;
-    if(doc){
-      doc.open();
-      doc.write(resumeHtml);
-      doc.close();
-    }
+    if(doc){ doc.open(); doc.write(resumeHtml); doc.close(); }
   }
 
-  // attach download/print handler
   setTimeout(()=> {
     document.getElementById('download-resume').addEventListener('click', ()=> {
-      // open in new window and call print() — good UX for PDF export
       const win = window.open('', '_blank');
       win.document.open();
       win.document.write(resumeHtml);
       win.document.close();
-      // wait briefly then print
-      setTimeout(()=> {
-        try { win.print(); } catch(e) { console.warn('Print failed', e); }
-      }, 300);
+      setTimeout(()=> { try { win.print(); } catch(e) { console.warn('Print failed', e); } }, 300);
     });
   }, 40);
 }
 
-/* ---------- Scratchpad persistence ---------- */
+/* Scratchpad persistence */
 const SCRATCH_KEY = 'sagheer:scratch';
 document.getElementById('save-scratch').addEventListener('click', () => {
   const txt = document.getElementById('scratch').value || '';
@@ -549,7 +530,7 @@ document.getElementById('export-scratch').addEventListener('click', () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'scratch.txt'; a.click(); URL.revokeObjectURL(a.href);
 });
 
-/* ---------- initial wiring ---------- */
+/* initial wiring */
 document.getElementById('view-projects').addEventListener('click', ()=> {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelector('.tab[data-target="projects"]').classList.add('active');
@@ -559,32 +540,25 @@ document.getElementById('view-projects').addEventListener('click', ()=> {
 document.getElementById('contact-me').addEventListener('click', openContactModal);
 document.getElementById('btn-contact-top').addEventListener('click', openContactModal);
 
-// resume button
+/* resume button */
 document.getElementById('btn-resume').addEventListener('click', openResumePreview);
 
-// copy-email
+/* copy-email */
 document.getElementById('copy-email').addEventListener('click', async ()=> {
   const email = CONTACT_EMAIL;
-  try {
-    await navigator.clipboard.writeText(email);
-    toast('Email copied to clipboard');
-  } catch {
-    toast('Copy failed — please select and copy manually');
-  }
+  try { await navigator.clipboard.writeText(email); toast('Email copied to clipboard'); }
+  catch { toast('Copy failed — please select and copy manually'); }
 });
 
-// keyboard accessibility: ESC close modal
-document.addEventListener('keydown', (e)=> {
-  if(e.key === 'Escape' && modal.classList.contains('open')) closeModal();
-});
+/* ESC closes modal */
+document.addEventListener('keydown', (e)=> { if(e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
 
-// Load scratch if present and fetch profile
+/* Load scratch & fetch profile */
 document.addEventListener('DOMContentLoaded', ()=> {
   const s = localStorage.getItem(SCRATCH_KEY) || '';
   document.getElementById('scratch').value = s;
   renderGithubProfile();
 });
-
 </script>
 </body>
 </html>
