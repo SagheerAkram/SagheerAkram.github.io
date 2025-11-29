@@ -47,12 +47,18 @@
   .modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
   .modal.open{display:flex}
   .modal-content{background:linear-gradient(180deg,#071225,#041424);padding:20px;border-radius:12px;max-width:900px;width:100%;max-height:90vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
+  .resume{background:#fff;color:#071225;padding:28px;border-radius:8px;font-family:Inter,Arial;margin:0 auto;max-width:850px}
+  .resume h1{margin:0;font-size:22px}
+  .resume h2{margin:8px 0 6px 0;font-size:16px;color:#111}
+  .resume p{margin:6px 0;color:#333}
+  .resume .muted{color:#666;font-size:13px}
   #loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;color:var(--muted)}
   .spinner{width:30px;height:30px;border-radius:50%;border:4px solid rgba(255,255,255,0.12);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-bottom:8px}
   @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
   footer{margin-top:32px;text-align:center;color:var(--muted)}
   input,textarea{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:8px;color:var(--text);width:100%}
   .small{font-size:13px;color:var(--muted)}
+  .download-btn{display:inline-block;padding:8px 12px;background:var(--accent);color:#041221;border-radius:8px;text-decoration:none;font-weight:700}
   @media(max-width:880px){.hero{flex-direction:column;align-items:center;text-align:center}}
 </style>
 </head>
@@ -144,7 +150,7 @@
   - Fetches profile and repos from GitHub for `sagheerakram`
   - Renders projects, about text, repos
   - Contact button opens modal + mailto + clipboard fallback
-  - Graceful when API rate-limited / offline
+  - Resume preview + Print (save as PDF) + Download HTML
   - Filters out repos named 'sagheerakram' and 'sagheerakram.github.io'
 */
 
@@ -391,6 +397,190 @@ function openContactModal(){
   }, 40);
 }
 
+/* ---------- Resume generation/print/download ---------- */
+function generateResumeHtml() {
+  // Made-up resume details per user's request, localized for Pakistan
+  const name = 'Sagheer Samiullah';
+  const title = 'Student — Computer Science';
+  const email = CONTACT_EMAIL;
+  const phone = '+92 300 0000000'; // placeholder phone
+  const location = 'Karachi, Pakistan';
+  const summary = `Motivated Computer Science student with hands-on experience in scripting, basic algorithms, and creative tooling. Strong problem-solver who enjoys automation, game-related tooling, and competitive puzzles (Rubik's Cube). Seeking internship or junior roles to apply modern software engineering practices.`;
+  const skills = ['Python', 'C', 'Java', 'Algorithms', 'Data Structures', 'Automation', 'Git', 'Docker (basic)'];
+  const projects = [
+    { title: 'RubikSolver', desc: 'Python-based Rubik\'s Cube solver using heuristic search and visualizer. Demonstrates algorithm design and optimization.' },
+    { title: 'QuickAutomation', desc: 'Small automation toolkit to batch-process CSVs and generate reports using Python.' },
+    { title: 'Game-Tools Collection', desc: 'Utilities for extracting and editing game data formats (personal projects).' }
+  ];
+  const experience = [
+    { role: 'Student Research Assistant (made-up)', org: 'Karachi Institute of Technology — Research Lab', period: 'Mar 2024 - Present', desc: 'Assisted on automation scripts and small data-processing pipelines for lab experiments. Wrote Python utilities to clean and prepare datasets.' },
+    { role: 'Teaching Volunteer', org: 'Community Coding Bootcamp', period: 'Jun 2023 - Dec 2023', desc: 'Helped run introductory programming sessions for high-school students; prepared exercise sets and grading scripts.' }
+  ];
+  const education = [
+    { school: 'Karachi Institute of Technology (made-up)', degree: 'B.S. Computer Science (In Progress)', years: '2022 - Present', notes: 'Relevant: Algorithms, Data Structures, Operating Systems, Database Systems.' },
+    { school: 'Central Science College (made-up)', degree: 'Higher Secondary Certificate — Pre-Engineering', years: '2020 - 2022', notes: 'Graduated with strong math and physics foundation.' }
+  ];
+  const certs = ['Certified Python Developer — Local Bootcamp (2024)', 'Introduction to Algorithms — Online Course (2023)'];
+  const hobbies = ['Rubik\'s Cube (solves under 2 minutes)', 'Digital Photography', 'Open-source tinkering'];
+
+  // Build a clean, printable HTML
+  const html = `
+  <!doctype html>
+  <html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Resume — ${name}</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+      body{font-family: Inter, Arial, sans-serif; margin:0; padding:28px; background:#f6f7fb; color:#111}
+      .resume{max-width:850px;margin:0 auto;background:#fff;padding:28px;border-radius:8px;box-shadow:0 8px 30px rgba(10,12,20,0.08)}
+      header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+      h1{margin:0;font-size:22px}
+      .muted{color:#555;font-size:13px}
+      .section{margin-top:18px}
+      .section h2{margin:0 0 8px 0;font-size:16px;color:#222}
+      .two-col{display:flex;gap:20px}
+      .col{flex:1}
+      ul{margin:6px 0 0 18px}
+      .meta{font-size:13px;color:#444}
+      .badge{display:inline-block;padding:6px 10px;border-radius:14px;background:#eef0ff;color:#2b2b6b;font-weight:700;margin-right:8px;margin-top:8px}
+      .project{margin-bottom:10px}
+      footer{margin-top:20px;text-align:center;color:#777;font-size:13px}
+      @media print {
+        body{background: white}
+        .resume{box-shadow:none;border-radius:0}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="resume">
+      <header>
+        <div>
+          <h1>${name}</h1>
+          <div class="muted">${title} • ${location}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted">Email</div>
+          <div>${email}</div>
+          <div class="muted" style="margin-top:8px">Phone</div>
+          <div>${phone}</div>
+        </div>
+      </header>
+
+      <div class="section">
+        <h2>Professional Summary</h2>
+        <p class="meta">${summary}</p>
+      </div>
+
+      <div class="section two-col">
+        <div class="col">
+          <h2>Education</h2>
+          ${education.map(e => `
+            <div style="margin-bottom:10px">
+              <strong>${e.school}</strong><div class="muted">${e.degree} • ${e.years}</div>
+              <div class="meta">${e.notes}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="col">
+          <h2>Skills</h2>
+          ${skills.map(s => `<span class="badge">${s}</span>`).join('')}
+          <h2 style="margin-top:14px">Certifications</h2>
+          <ul>${certs.map(c=>`<li>${c}</li>`).join('')}</ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Experience</h2>
+        ${experience.map(ex => `
+          <div style="margin-bottom:12px">
+            <strong>${ex.role}</strong> <span class="muted">• ${ex.org} • ${ex.period}</span>
+            <p class="meta">${ex.desc}</p>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="section">
+        <h2>Selected Projects</h2>
+        ${projects.map(p => `
+          <div class="project">
+            <strong>${p.title}</strong>
+            <div class="meta">${p.desc}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="section two-col">
+        <div class="col">
+          <h2>Languages</h2>
+          <ul><li>Urdu (Native)</li><li>English (Fluent)</li></ul>
+        </div>
+        <div class="col">
+          <h2>Hobbies & Interests</h2>
+          <ul>${hobbies.map(h=>`<li>${h}</li>`).join('')}</ul>
+        </div>
+      </div>
+
+      <footer>Generated resume — ${name} • ${new Date().getFullYear()}</footer>
+    </div>
+  </body>
+  </html>
+  `;
+  return html;
+}
+
+function openResumePreview(){
+  const html = generateResumeHtml();
+  // show inside modal with buttons
+  showModal(`
+    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+      <h2>Resume — Sagheer Samiullah</h2>
+      <div>
+        <button id="print-resume" class="btn btn-primary">Print / Save as PDF</button>
+        <button id="download-html" class="btn btn-ghost">Download HTML</button>
+      </div>
+    </div>
+    <div style="margin-top:12px;max-height:65vh;overflow:auto;background:linear-gradient(180deg,#f7f8fc,#fff);padding:12px;border-radius:8px">
+      <iframe id="resume-frame" style="width:100%;height:600px;border:0" srcdoc="${escapeHtml(generateResumeHtml())}"></iframe>
+    </div>
+  `);
+
+  // attach handlers
+  setTimeout(()=> {
+    document.getElementById('print-resume').addEventListener('click', ()=> {
+      // open new window containing resume HTML and call print()
+      const win = window.open('', '_blank');
+      win.document.open();
+      win.document.write(generateResumeHtml());
+      win.document.close();
+      // wait a bit for rendering then print
+      setTimeout(()=> {
+        try { win.print(); } catch(e) { console.warn('Print failed', e); }
+      }, 300);
+    });
+
+    document.getElementById('download-html').addEventListener('click', ()=> {
+      const data = generateResumeHtml();
+      const blob = new Blob([data], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'SagheerSamiullah_Resume.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast('Downloaded resume HTML');
+    });
+  }, 40);
+}
+
+// escape helper for embedding into srcdoc
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 /* ---------- Scratchpad persistence ---------- */
 const SCRATCH_KEY = 'sagheer:scratch';
 document.getElementById('save-scratch').addEventListener('click', () => {
@@ -414,6 +604,11 @@ document.getElementById('view-projects').addEventListener('click', ()=> {
 });
 document.getElementById('contact-me').addEventListener('click', openContactModal);
 document.getElementById('btn-contact-top').addEventListener('click', openContactModal);
+
+// resume button
+document.getElementById('btn-resume').addEventListener('click', openResumePreview);
+
+// copy-email
 document.getElementById('copy-email').addEventListener('click', async ()=> {
   const email = CONTACT_EMAIL;
   try {
@@ -429,7 +624,7 @@ document.addEventListener('keydown', (e)=> {
   if(e.key === 'Escape' && modal.classList.contains('open')) closeModal();
 });
 
-// Load scratch if present
+// Load scratch if present and fetch profile
 document.addEventListener('DOMContentLoaded', ()=> {
   const s = localStorage.getItem(SCRATCH_KEY) || '';
   document.getElementById('scratch').value = s;
